@@ -43,28 +43,27 @@ DEPOSIT_ANGLE = 90      # degrees arc angle for deposit
 SHIFT_BACK = 26
 shift_back2 = 46
 
-# Fixed overhead per command (ms) that doesn't scale with speed
-# (motor state transitions, command processing, stop/start between moves)
+# per-move overhead (ms), doesn't scale with speed
 COMMAND_OVERHEAD_MS = 22
 
-# Measured time (ms) for each command at base speed
+# measured ms per move at base speed
 TIME_ESTIMATES = {
-    'I': 2064,   # Initial move — straight forward 310mm
-    'W': 2965,   # Forward — straight forward one grid square (500mm)
-    'S': 3045,   # Backward — straight backward one grid square (500mm)
-    'A': 1100,   # Turn left — 90° turn in place (counterclockwise)
-    'D': 1095,   # Turn right — 90° turn in place (clockwise)
-    'Q': 4455,   # Arc forward-left — 90° arc curving left (radius 500mm)
-    'E': 4405,   # Arc forward-right — 90° arc curving right (radius 500mm)
-    'Z': 4500,   # Arc backward-left — reverse 90° arc curving left (radius 500mm)
-    'C': 4400,   # Arc backward-right — reverse 90° arc curving right (radius 500mm)
-    'P': 735,    # Center ping — short reverse 60mm (final adjustment)
-    'R': 8000,   # U-turn left — forward 250mm + 180° left arc + forward 250mm
-    'Y': 7925,   # U-turn right — forward 250mm + 180° right arc + forward 250mm
-    'F': 7910,   # Reverse U-turn left — forward 250mm + reverse 180° left arc + forward 250mm
-    'H': 7910,   # Reverse U-turn right — forward 250mm + reverse 180° right arc + forward 250mm
-    'G': 3315,   # Deposit right — push forward + right arc out and back (bottle drop)
-    'L': 3400,   # Deposit left — push forward + left arc out and back (bottle drop)
+    'I': 2064,   # start offset 310mm
+    'W': 2965,   # fwd 1 square
+    'S': 3045,   # back 1 square
+    'A': 1100,   # turn left
+    'D': 1095,   # turn right
+    'Q': 4455,   # arc fwd left
+    'E': 4405,   # arc fwd right
+    'Z': 4500,   # arc back left
+    'C': 4400,   # arc back right
+    'P': 735,    # final back-up 60mm
+    'R': 8000,   # u-turn left
+    'Y': 7925,   # u-turn right
+    'F': 7910,   # reverse u-turn left
+    'H': 7910,   # reverse u-turn right
+    'G': 3315,   # deposit right
+    'L': 3400,   # deposit left
 }
 
 
@@ -128,7 +127,7 @@ def execute_path(robot, path):
         elif cmd in 'Ss':        # Backward one grid square
             robot.straight(-GRID)
 
-        elif cmd in 'Aa':        # Turn left 90
+        elif cmd in 'Aa':        # Turn left 90°
             robot.turn(-90, Stop.COAST_SMART)
 
         elif cmd in 'Dd':        # Turn right 90°
@@ -191,8 +190,6 @@ def calculate_speed_factor(path, target_time):
     est_ms = estimate_time(path)
     n_commands = len(path)
 
-    # Separate the fixed overhead (doesn't scale with speed)
-    # from the actual motion time (scales as 1/factor)
     total_overhead_s = n_commands * COMMAND_OVERHEAD_MS / 1000.0
     scalable_s = est_ms / 1000.0 - total_overhead_s
 
@@ -229,7 +226,6 @@ def main():
     print(timer.time())
 
 
-    # Turn light green when path is complete
     hub.light.on(Color.GREEN)
 
     wait(3000)
